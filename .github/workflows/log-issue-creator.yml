@@ -15,20 +15,22 @@ jobs:
       - name: Create Issue
         run: |
           if [[ $CLOSE_PREVIOUS == true ]]; then
-            previous_issue_number=$(gh issue list \
+            previous_issue_numbers=$(gh issue list \
               --label "$LABELS" \
               --json number \
               --search "created $(date -d yesterday '+%Y-%m-%d')" \
-              --jq '.[0].number')
-            if [[ -n $previous_issue_number ]]; then
-              gh issue close "$previous_issue_number"
-              gh issue unpin "$previous_issue_number"
-              comment_count=$(gh issue view "$previous_issue_number" --json comments --jq '.comments')
-              if [[ $comment_count -eq 0 ]]; then
-                gh issue delete "$previous_issue_number" \
-                  --yes
+              --jq '.[].number')
+            for previous_issue_number in $previous_issue_numbers; do
+              if [[ -n $previous_issue_number ]]; then
+                gh issue close "$previous_issue_number"
+                gh issue unpin "$previous_issue_number"
+                comment_count=$(gh issue view "$previous_issue_number" --json comments --jq '.comments')
+                if [[ $comment_count -eq 0 ]]; then
+                  gh issue delete "$previous_issue_number" \
+                    --yes
+                fi
               fi
-            fi
+            done
           fi
           if ! gh label list --json name | jq -r '.[].name' | grep -q "log"; then
             gh label create log
