@@ -22,12 +22,13 @@ jobs:
               --jq '.[].number')
             for previous_issue_number in $previous_issue_numbers; do
               if [[ -n $previous_issue_number ]]; then
-                gh issue close "$previous_issue_number"
-                gh issue unpin "$previous_issue_number"
                 comment_count=$(gh issue view "$previous_issue_number" --json comments --jq '.comments')
                 if [[ $comment_count -eq 0 ]]; then
                   gh issue delete "$previous_issue_number" \
                     --yes
+                else
+                  gh issue close "$previous_issue_number"
+                  gh issue unpin "$previous_issue_number"
                 fi
               fi
             done
