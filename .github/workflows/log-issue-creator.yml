@@ -18,7 +18,7 @@ jobs:
             previous_issue_numbers=$(gh issue list \
               --label "$LABELS" \
               --json number \
-              --search "created $(date -d yesterday '+%Y-%m-%d')" \
+              --search "created:>=$(date -d yesterday '+%Y-%m-%d')" \
               --jq '.[].number')
             for previous_issue_number in $previous_issue_numbers; do
               if [[ -n $previous_issue_number ]]; then
