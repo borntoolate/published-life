@@ -1,0 +1,50 @@
+name: Log Issue Creator
+env:
+  GITHUB_TOKEN: ${{ github.token }}
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '15 * * * *'
+jobs:
+  create-issue:
+    name: Create Log Issue
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set Today's Date
+        run: echo "TODAY=$(date -d tomorrow '+%Y/%m/%d')" >> $GITHUB_ENV
+      - name: Create Issue
+        run: |
+          if [[ $CLOSE_PREVIOUS == true ]]; then
+            previous_issue_number=$(gh issue list \
+              --label "$LABELS" \
+              --json number \
+              --jq '.[0].number')
+            if [[ -n $previous_issue_number ]]; then
+              gh issue close "$previous_issue_number"
+              gh issue unpin "$previous_issue_number"
+              comment_count=$(gh issue view "$previous_issue_number" --json comments --jq '.comments')
+              if [[ $comment_count -eq 0 ]]; then
+                gh issue delete "$previous_issue_number" \
+                  --yes
+              fi
+            fi
+          fi
+          new_issue_url=$(gh issue create \
+            --title "$TITLE" \
+            --assignee "$ASSIGNEES" \
+            --label "$LABELS" \
+            --body "$BODY")
+          if [[ $PINNED == true ]]; then
+            gh issue pin "$new_issue_url"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TITLE: "[log]${{ env.TODAY }}"
+          ASSIGNEES: borntoolate
+          LABELS: log
+          BODY: |
+            _Not everything can be written freely._
+            [Issues](https://github.com/borntoolate/tasukete/issues)
+          PINNED: false
+          CLOSE_PREVIOUS: false
