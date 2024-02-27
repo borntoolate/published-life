@@ -18,6 +18,7 @@ jobs:
             previous_issue_number=$(gh issue list \
               --label "$LABELS" \
               --json number \
+              --search "created $(date -d yesterday '+%Y-%m-%d')" \
               --jq '.[0].number')
             if [[ -n $previous_issue_number ]]; then
               gh issue close "$previous_issue_number"
@@ -50,4 +51,4 @@ jobs:
             _Not everything can be written freely._
             [Issues](https://github.com/borntoolate/tasukete/issues)
           PINNED: false
-          CLOSE_PREVIOUS: false
+          CLOSE_PREVIOUS: true
