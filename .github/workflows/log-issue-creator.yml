@@ -29,6 +29,9 @@ jobs:
               fi
             fi
           fi
+          if ! gh label list --json name | jq -r '.[].name' | grep -q "log"; then
+            gh label create log
+          fi
           new_issue_url=$(gh issue create \
             --title "$TITLE" \
             --assignee "$ASSIGNEES" \
