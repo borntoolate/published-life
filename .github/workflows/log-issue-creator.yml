@@ -1,6 +1,6 @@
 name: Log Issue Creator
 env:
-  GITHUB_TOKEN: ${{ github.token }}
+  TODAY: ''
 on:
   workflow_dispatch:
   schedule:
@@ -10,6 +10,15 @@ jobs:
     name: Create Log Issue
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Generate GitHub Apps token
+        id: generate
+        run: |
+          .github/scripts/generate-github-token.sh
+        env:
+          APP_ID: ${{ secrets.APP_ID }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
       - name: Set Today's Date
         run: echo "TODAY=$(date -d tomorrow '+%Y/%m/%d')" >> $GITHUB_ENV
       - name: Create Issue
@@ -45,13 +54,22 @@ jobs:
             gh issue pin "$new_issue_url"
           fi
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ steps.generate.outputs.token }}
           GH_REPO: ${{ github.repository }}
           TITLE: "[log]${{ env.TODAY }}"
-          ASSIGNEES: borntoolate
+          ASSIGNEES: ${{ github.repository_owner }}
           LABELS: log
           BODY: |
             _Not everything can be written freely._
             [Issues](https://github.com/borntoolate/tasukete/issues)
           PINNED: false
           CLOSE_PREVIOUS: true
+      - name: Revoke GitHub Apps token
+        env:
+          GITHUB_TOKEN: ${{ steps.generate.outputs.token }}
+        run: |
+          curl --location --silent --request DELETE \
+            --url "${GITHUB_API_URL}/installation/token" \
+            --header "Accept: application/vnd.github+json" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            --header "Authorization: Bearer ${GITHUB_TOKEN}"
