@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Make the Script file executable
+        run: chmod +x .github/scripts/generate-github-token.sh
       - name: Generate GitHub Apps token
         id: generate
         run: |
