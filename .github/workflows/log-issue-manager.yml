@@ -1,13 +1,14 @@
-name: Log Issue Creator
+name: Log Issue Manager
 env:
   TODAY: ''
+  YM: ''
 on:
   workflow_dispatch:
   schedule:
     - cron: '0 15 * * *'
 jobs:
   create-issue:
-    name: Create Log Issue
+    name: Manage Log Issue
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -21,16 +22,20 @@ jobs:
         env:
           APP_ID: ${{ secrets.APP_ID }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-      - name: Set Today's Date
+      - name: Set Today's date
         run: echo "TODAY=$(date -d tomorrow '+%Y/%m/%d')" >> $GITHUB_ENV
+      - name: Set current year and month
+        id: date
+        run: echo "YM=$(date '+%Y-%m')" >> $GITHUB_ENV
       - name: Create Issue
         run: |
           if [[ $CLOSE_PREVIOUS == true ]]; then
             previous_issue_numbers=$(gh issue list \
-              --label "$LABELS" \
+              --label "log" \
               --json number \
               --search "created:>=$(date -d yesterday '+%Y-%m-%d')" \
               --jq '.[].number')
+            echo "Previous issue numbers: $previous_issue_numbers"
             for previous_issue_number in $previous_issue_numbers; do
               if [[ -n $previous_issue_number ]]; then
                 comment_count=$(gh issue view "$previous_issue_number" --json comments --jq '.comments | length')
@@ -47,6 +52,9 @@ jobs:
           if ! gh label list --json name | jq -r '.[].name' | grep -q "log"; then
             gh label create log
           fi
+          if ! gh label list --json name | jq -r '.[].name' | grep -q $YM; then
+            gh label create $YM
+          fi
           new_issue_url=$(gh issue create \
             --title "$TITLE" \
             --assignee "$ASSIGNEES" \
@@ -60,7 +68,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           TITLE: "[log]${{ env.TODAY }}"
           ASSIGNEES: ${{ github.repository_owner }}
-          LABELS: log
+          LABELS: "log,${{ env.YM }}"
           BODY: |
             _Not everything can be written freely._
             [Issues](https://github.com/borntoolate/tasukete/issues)
