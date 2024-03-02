@@ -7,7 +7,7 @@ on:
   schedule:
     - cron: '0 15 * * *'
 jobs:
-  create-issue:
+  manage-issue:
     name: Manage Log Issue
     runs-on: ubuntu-latest
     steps:
@@ -27,7 +27,7 @@ jobs:
       - name: Set current year and month
         id: date
         run: echo "YM=$(date '+%Y-%m')" >> $GITHUB_ENV
-      - name: Create Issue
+      - name: Manage Issue
         run: |
           if [[ $CLOSE_PREVIOUS == true ]]; then
             previous_issue_numbers=$(gh issue list \
@@ -64,8 +64,7 @@ jobs:
             gh issue pin "$new_issue_url"
           fi
         env:
-          GITHUB_TOKEN: ${{ steps.generate.outputs.token }}
-          GH_REPO: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           TITLE: "[log]${{ env.TODAY }}"
           ASSIGNEES: ${{ github.repository_owner }}
           LABELS: "log,${{ env.YM }}"
